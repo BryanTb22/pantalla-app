@@ -20,12 +20,16 @@ public class Notifs {
     }
 
     static void mostrar(Context c, String titulo, String mensaje) {
+        mostrar(c, 2, titulo, mensaje);
+    }
+
+    static void mostrar(Context c, int id, String titulo, String mensaje) {
         crearCanal(c);
         Notification.Builder b = Build.VERSION.SDK_INT >= 26
                 ? new Notification.Builder(c, CANAL)
                 : new Notification.Builder(c);
         PendingIntent abrir = PendingIntent.getActivity(c, 0,
-                new Intent(c, MainActivity.class), PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+                new Intent(c, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         b.setSmallIcon(R.drawable.ic_stat)
                 .setContentTitle(titulo)
                 .setContentText(mensaje)
@@ -33,7 +37,7 @@ public class Notifs {
                 .setAutoCancel(true)
                 .setContentIntent(abrir);
         try {
-            c.getSystemService(NotificationManager.class).notify(2, b.build());
+            c.getSystemService(NotificationManager.class).notify(id, b.build());
         } catch (SecurityException ignored) {
             // Sin permiso de notificaciones: no se muestra.
         }

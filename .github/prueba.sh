@@ -7,7 +7,13 @@ adb shell am start -n trade.litlejacob.cloud/.MainActivity
 sleep 20
 adb exec-out screencap -p > prueba-panel.png
 adb shell input keyevent KEYCODE_BACK
+sleep 3
+adb shell input swipe 500 1600 500 400 400
 sleep 2
+adb exec-out screencap -p > prueba-panel2.png
+adb shell input swipe 500 1600 500 400 400
+sleep 2
+adb exec-out screencap -p > prueba-panel3.png
 adb shell am start -n trade.litlejacob.cloud/.MainActivity
 sleep 5
 adb shell am start -n trade.litlejacob.cloud/.VisorActivity

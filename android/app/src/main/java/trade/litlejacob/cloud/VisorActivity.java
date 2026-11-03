@@ -6,6 +6,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
+import android.view.WindowManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -23,6 +24,8 @@ public class VisorActivity extends Activity {
         super.onCreate(b);
         boolean controlar = getIntent().getBooleanExtra("controlar", false);
         String pass = getSharedPreferences("cfg", MODE_PRIVATE).getString("pass", "");
+        // La pantalla del celular no se apaga mientras miras.
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         FrameLayout raiz = new FrameLayout(this);
         raiz.setBackgroundColor(Color.BLACK);

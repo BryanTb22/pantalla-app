@@ -8,6 +8,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 /** Revisa cada 15 minutos si el servidor responde y avisa si se cae o vuelve. */
 public class Vigia extends JobService {
     static final int ID = 1;
@@ -60,9 +63,47 @@ public class Vigia extends JobService {
                 }
                 p.edit().putBoolean("servidor_ok", arriba).apply();
             }
+            try {
+                revisarPanel(p);
+            } catch (Exception ignored) { }
             jobFinished(params, false);
         }).start();
         return true;
+    }
+
+    /** Avisa si el conector deja de responder o si se cierra alguna sesión. */
+    private void revisarPanel(SharedPreferences p) throws Exception {
+        Red.Respuesta r = Red.panel("GET", "estado", p.getString("pass", ""));
+        if (r.codigo != 200) return;
+        JSONObject j = new JSONObject(r.cuerpo);
+        SharedPreferences.Editor e = p.edit();
+
+        boolean bien = j.optBoolean("conector") && j.optBoolean("chrome");
+        int antes = p.getInt("con_fallos", 0);
+        int fallos = bien ? 0 : antes + 1;
+        if (fallos == 2) {
+            Notifs.mostrar(this, 3, "Claude no puede usar tu Chrome nube",
+                    "El conector o Chrome no responden desde hace un rato. Abre LitleJacob Cloud y toca Reiniciar Chrome.");
+        } else if (bien && antes >= 2) {
+            Notifs.mostrar(this, 3, "Chrome nube funcionando de nuevo", "El conector volvió a responder.");
+        }
+        e.putInt("con_fallos", fallos);
+
+        JSONArray ses = j.optJSONArray("sesiones");
+        if (ses != null) {
+            for (int i = 0; i < ses.length(); i++) {
+                JSONObject s = ses.optJSONObject(i);
+                if (s == null) continue;
+                String clave = "ses_" + s.optString("id");
+                boolean activa = s.optBoolean("activa");
+                if (p.contains(clave) && p.getBoolean(clave, false) && !activa) {
+                    Notifs.mostrar(this, 10 + i, "Se cerró tu sesión de " + s.optString("nombre"),
+                            "Entra con Controlar pantalla en LitleJacob Cloud para volver a iniciar sesión.");
+                }
+                e.putBoolean(clave, activa);
+            }
+        }
+        e.apply();
     }
 
     @Override

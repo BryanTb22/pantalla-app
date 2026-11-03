@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.InputType;
+import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.EditText;
@@ -31,6 +32,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Locale;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /** Panel de inicio de LitleJacob Cloud. */
 public class MainActivity extends Activity {
@@ -41,7 +46,8 @@ public class MainActivity extends Activity {
     private SharedPreferences prefs;
     private final Handler h = new Handler(Looper.getMainLooper());
     private View punto;
-    private TextView estado, detalle, txtUpd;
+    private TextView estado, detalle, txtUpd, indPantalla, indConector, indChrome, recursos, tituloPestanas;
+    private LinearLayout listaPestanas, listaSesiones, listaEventos;
     private LinearLayout bannerUpd;
     private int versionRemota = 0;
 
@@ -168,6 +174,19 @@ public class MainActivity extends Activity {
         detalle = texto("Toca aquí para volver a revisar", 13, GRIS, false);
         detalle.setPadding(dp(24), dp(4), 0, 0);
         est.addView(detalle);
+        LinearLayout ind = new LinearLayout(this);
+        ind.setPadding(dp(24), dp(10), 0, 0);
+        indPantalla = indicador(ind);
+        indConector = indicador(ind);
+        indChrome = indicador(ind);
+        ponerIndicador(indPantalla, "Pantalla", null);
+        ponerIndicador(indConector, "Conector", null);
+        ponerIndicador(indChrome, "Chrome", null);
+        est.addView(ind);
+        recursos = texto("", 13, GRIS, false);
+        recursos.setPadding(dp(24), dp(8), 0, 0);
+        recursos.setVisibility(View.GONE);
+        est.addView(recursos);
         est.setOnClickListener(v -> revisarServidor());
         col.addView(est, ancho(26));
 
@@ -192,6 +211,39 @@ public class MainActivity extends Activity {
                 v -> abrirVisor(true)), ancho(12));
         col.addView(boton("✳  Abrir Claude", "Ir a la app de Claude para darle órdenes", false,
                 v -> abrirClaude()), ancho(12));
+
+        // Pestañas abiertas en el Chrome nube
+        tituloPestanas = texto("PESTAÑAS ABIERTAS", 12, GRIS, true);
+        col.addView(tituloPestanas, ancho(28));
+        listaPestanas = tarjeta();
+        listaPestanas.addView(nota("Cargando…"));
+        col.addView(listaPestanas, ancho(10));
+
+        // Sesiones iniciadas
+        col.addView(texto("SESIONES EN EL CHROME NUBE", 12, GRIS, true), ancho(28));
+        listaSesiones = tarjeta();
+        listaSesiones.addView(nota("Cargando…"));
+        col.addView(listaSesiones, ancho(10));
+
+        // Herramientas
+        col.addView(texto("HERRAMIENTAS", 12, GRIS, true), ancho(28));
+        LinearLayout her = tarjeta();
+        her.addView(opcion("🔄  Reiniciar Chrome", "Lo cierra y lo vuelve a abrir con las mismas pestañas",
+                v -> accionServidor("reiniciar-chrome", "¿Reiniciar Chrome?",
+                        "Chrome se cerrará unos segundos y volverá con tus pestañas. Si Claude está trabajando, se interrumpe.",
+                        "Reiniciando Chrome…")));
+        her.addView(separador());
+        her.addView(opcion("🧹  Limpiar caché", "Libera espacio y memoria (Chrome se reinicia ~20 s)",
+                v -> accionServidor("limpiar", "¿Limpiar caché?",
+                        "Se borra la caché y las descargas de más de 14 días. Tus sesiones NO se cierran. Chrome se reinicia unos segundos.",
+                        "Limpiando…")));
+        col.addView(her, ancho(10));
+
+        // Últimos eventos
+        col.addView(texto("ÚLTIMOS EVENTOS DEL SERVIDOR", 12, GRIS, true), ancho(28));
+        listaEventos = tarjeta();
+        listaEventos.addView(nota("Cargando…"));
+        col.addView(listaEventos, ancho(10));
 
         // Ajustes
         col.addView(texto("AJUSTES", 12, GRIS, true), ancho(28));
@@ -233,6 +285,55 @@ public class MainActivity extends Activity {
         ver.setGravity(Gravity.CENTER);
         col.addView(ver, ancho(24));
         return sv;
+    }
+
+    private LinearLayout tarjeta() {
+        LinearLayout t = new LinearLayout(this);
+        t.setOrientation(LinearLayout.VERTICAL);
+        t.setBackground(caja(TARJETA, 18, BORDE));
+        t.setPadding(dp(18), dp(6), dp(18), dp(6));
+        return t;
+    }
+
+    private TextView nota(String s) {
+        TextView t = texto(s, 14, GRIS, false);
+        t.setPadding(0, dp(12), 0, dp(12));
+        return t;
+    }
+
+    private View opcion(String titulo, String sub, View.OnClickListener click) {
+        LinearLayout l = new LinearLayout(this);
+        l.setOrientation(LinearLayout.VERTICAL);
+        l.setPadding(0, dp(12), 0, dp(12));
+        l.addView(texto(titulo, 15, TEXTO, true));
+        TextView s = texto(sub, 13, GRIS, false);
+        s.setPadding(0, dp(2), 0, 0);
+        l.addView(s);
+        l.setOnClickListener(click);
+        return l;
+    }
+
+    private TextView indicador(LinearLayout fila) {
+        TextView t = texto("", 13, GRIS, true);
+        t.setPadding(0, 0, dp(16), 0);
+        fila.addView(t);
+        return t;
+    }
+
+    private void ponerIndicador(TextView t, String nombre, Boolean ok) {
+        t.setText("● " + nombre);
+        t.setTextColor(ok == null ? GRIS : (ok ? VERDE : ROJO));
+    }
+
+    private static String gb(double bytes) {
+        return String.format(new Locale("es"), "%.1f", bytes / 1073741824.0);
+    }
+
+    private static String duracion(long seg) {
+        long d = seg / 86400, h = (seg % 86400) / 3600, m = (seg % 3600) / 60;
+        if (d > 0) return d + " d " + h + " h";
+        if (h > 0) return h + " h " + m + " min";
+        return m + " min";
     }
 
     private View separador() {
@@ -280,11 +381,12 @@ public class MainActivity extends Activity {
         box.addView(et, new LinearLayout.LayoutParams(-1, -2));
         new AlertDialog.Builder(this)
                 .setTitle("Contraseña de la pantalla")
-                .setMessage("Escríbela una sola vez. Se guarda solo en este celular y la app la pondrá sola cada vez.")
+                .setMessage("Escríbela una sola vez. Se guarda solo en este celular y la app la pondrá sola cada vez. Es la misma clave para la pantalla y el panel.")
                 .setView(box)
                 .setPositiveButton("Guardar", (d, w) -> {
                     prefs.edit().putString("pass", et.getText().toString().trim()).apply();
                     Toast.makeText(this, "Contraseña guardada", Toast.LENGTH_SHORT).show();
+                    revisarServidor();
                     if (despues != null) despues.run();
                 })
                 .setNegativeButton("Cancelar", null)
@@ -301,24 +403,163 @@ public class MainActivity extends Activity {
     private void revisarServidor() {
         estado.setText("Revisando servidor…");
         punto.setBackground(circulo(AMBAR));
+        final String clave = prefs.getString("pass", "");
         new Thread(() -> {
-            int code = Red.estado(Red.PANTALLA);
-            runOnUiThread(() -> {
-                if (code == 200) {
-                    punto.setBackground(circulo(VERDE));
-                    estado.setText("Servidor en línea");
-                    detalle.setText("Todo funcionando · toca para revisar de nuevo");
-                } else if (code == -1) {
-                    punto.setBackground(circulo(AMBAR));
-                    estado.setText("Sin internet en el celular");
-                    detalle.setText("Revisa tu conexión y toca para reintentar");
-                } else {
-                    punto.setBackground(circulo(ROJO));
-                    estado.setText("Servidor sin respuesta");
-                    detalle.setText("Código " + code + " · puede estar apagado o reiniciándose");
-                }
-            });
+            Red.Respuesta r = Red.panel("GET", "estado", clave);
+            JSONObject j = null;
+            if (r.codigo == 200) {
+                try { j = new JSONObject(r.cuerpo); } catch (Exception ignored) { }
+            }
+            final int codPantalla = (j == null) ? Red.estado(Red.PANTALLA) : 0;
+            final JSONObject fj = j;
+            final int codPanel = r.codigo;
+            runOnUiThread(() -> pintarEstado(fj, codPanel, codPantalla));
         }).start();
+    }
+
+    private void pintarEstado(JSONObject j, int codPanel, int codPantalla) {
+        if (j != null) {
+            boolean pant = j.optBoolean("pantalla"), con = j.optBoolean("conector"), chr = j.optBoolean("chrome");
+            ponerIndicador(indPantalla, "Pantalla", pant);
+            ponerIndicador(indConector, "Conector", con);
+            ponerIndicador(indChrome, "Chrome", chr);
+            boolean todo = pant && con && chr;
+            punto.setBackground(circulo(todo ? VERDE : ROJO));
+            estado.setText(todo ? "Todo funcionando" : "Hay un problema");
+            if (todo) detalle.setText("Toca aquí para revisar de nuevo");
+            else if (!chr) detalle.setText("Chrome no responde. El vigilante lo reinicia solo; si sigue así, usa Reiniciar Chrome.");
+            else if (!con) detalle.setText("El conector no responde: Claude no puede usar tu Chrome. Prueba Reiniciar Chrome.");
+            else detalle.setText("La pantalla remota no responde. El vigilante la reinicia sola en unos minutos.");
+            JSONObject s = j.optJSONObject("sistema");
+            if (s != null) {
+                JSONObject ram = s.optJSONObject("ram"), disco = s.optJSONObject("disco");
+                StringBuilder b = new StringBuilder();
+                if (ram != null) b.append("RAM ").append(gb(ram.optDouble("usada"))).append(" / ").append(gb(ram.optDouble("total"))).append(" GB");
+                if (disco != null) b.append("  ·  Disco ").append(gb(disco.optDouble("usado"))).append(" / ").append(gb(disco.optDouble("total"))).append(" GB");
+                b.append("\n").append(s.optInt("nucleos")).append(" núcleos  ·  encendido hace ").append(duracion(s.optLong("encendidoSeg")));
+                recursos.setText(b.toString());
+                recursos.setVisibility(View.VISIBLE);
+            }
+            pintarPestanas(j.optJSONArray("pestanas"));
+            pintarSesiones(j.optJSONArray("sesiones"));
+            pintarEventos(j.optJSONArray("eventos"));
+            return;
+        }
+        ponerIndicador(indConector, "Conector", null);
+        ponerIndicador(indChrome, "Chrome", null);
+        recursos.setVisibility(View.GONE);
+        if (codPanel == 401) {
+            punto.setBackground(circulo(AMBAR));
+            estado.setText("Clave incorrecta");
+            detalle.setText("Actualiza la contraseña en Ajustes para ver el panel completo");
+            ponerIndicador(indPantalla, "Pantalla", null);
+        } else if (codPantalla == 200) {
+            punto.setBackground(circulo(AMBAR));
+            estado.setText("Pantalla en línea");
+            detalle.setText("No se pudo leer el resto del servidor (código " + codPanel + ")");
+            ponerIndicador(indPantalla, "Pantalla", true);
+        } else if (codPantalla == -1) {
+            punto.setBackground(circulo(AMBAR));
+            estado.setText("Sin internet en el celular");
+            detalle.setText("Revisa tu conexión y toca para reintentar");
+            ponerIndicador(indPantalla, "Pantalla", null);
+        } else {
+            punto.setBackground(circulo(ROJO));
+            estado.setText("Servidor sin respuesta");
+            detalle.setText("Código " + codPantalla + " · puede estar apagado o reiniciándose");
+            ponerIndicador(indPantalla, "Pantalla", false);
+        }
+        String sin = codPanel == 401 ? "Necesita la clave correcta" : "Sin datos del servidor";
+        listaPestanas.removeAllViews(); listaPestanas.addView(nota(sin));
+        listaSesiones.removeAllViews(); listaSesiones.addView(nota(sin));
+        listaEventos.removeAllViews(); listaEventos.addView(nota(sin));
+    }
+
+    private void pintarPestanas(JSONArray a) {
+        listaPestanas.removeAllViews();
+        if (a == null) { listaPestanas.addView(nota("No se pudo leer Chrome")); return; }
+        tituloPestanas.setText("PESTAÑAS ABIERTAS (" + a.length() + ")");
+        if (a.length() == 0) { listaPestanas.addView(nota("Ninguna pestaña abierta")); return; }
+        for (int i = 0; i < a.length(); i++) {
+            JSONObject t = a.optJSONObject(i);
+            if (t == null) continue;
+            if (i > 0) listaPestanas.addView(separador());
+            LinearLayout fila = new LinearLayout(this);
+            fila.setOrientation(LinearLayout.VERTICAL);
+            fila.setPadding(0, dp(11), 0, dp(11));
+            TextView tt = texto(t.optString("titulo"), 15, TEXTO, false);
+            tt.setSingleLine(true);
+            tt.setEllipsize(TextUtils.TruncateAt.END);
+            fila.addView(tt);
+            String host = "";
+            try { host = Uri.parse(t.optString("url")).getHost(); } catch (Exception ignored) { }
+            TextView th = texto(host == null || host.isEmpty() ? t.optString("url") : host, 12, GRIS, false);
+            th.setSingleLine(true);
+            th.setEllipsize(TextUtils.TruncateAt.END);
+            fila.addView(th);
+            fila.setOnClickListener(v -> abrirVisor(false));
+            listaPestanas.addView(fila);
+        }
+    }
+
+    private void pintarSesiones(JSONArray a) {
+        listaSesiones.removeAllViews();
+        if (a == null) { listaSesiones.addView(nota("No se pudo leer Chrome")); return; }
+        for (int i = 0; i < a.length(); i++) {
+            JSONObject s = a.optJSONObject(i);
+            if (s == null) continue;
+            if (i > 0) listaSesiones.addView(separador());
+            LinearLayout fila = new LinearLayout(this);
+            fila.setGravity(Gravity.CENTER_VERTICAL);
+            fila.setPadding(0, dp(11), 0, dp(11));
+            fila.addView(texto(s.optString("nombre"), 15, TEXTO, false), new LinearLayout.LayoutParams(0, -2, 1f));
+            boolean act = s.optBoolean("activa");
+            fila.addView(texto(act ? "● Activa" : "● Cerrada", 14, act ? VERDE : ROJO, true));
+            if (!act) fila.setOnClickListener(v -> abrirVisor(true));
+            listaSesiones.addView(fila);
+        }
+        TextView n = texto("Si una sesión está cerrada, tócala para entrar con Controlar pantalla.", 12, GRIS, false);
+        n.setPadding(0, dp(4), 0, dp(10));
+        listaSesiones.addView(n);
+    }
+
+    private void pintarEventos(JSONArray a) {
+        listaEventos.removeAllViews();
+        if (a == null || a.length() == 0) { listaEventos.addView(nota("Sin novedades: todo estable.")); return; }
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(0, dp(8), 0, dp(8));
+        for (int i = 0; i < Math.min(6, a.length()); i++) {
+            TextView t = texto(a.optString(i), 12, GRIS, false);
+            t.setPadding(0, dp(3), 0, dp(3));
+            box.addView(t);
+        }
+        listaEventos.addView(box);
+    }
+
+    private void accionServidor(String ruta, String titulo, String mensaje, String hecho) {
+        new AlertDialog.Builder(this)
+                .setTitle(titulo)
+                .setMessage(mensaje)
+                .setPositiveButton("Sí", (d, w) -> {
+                    final String clave = prefs.getString("pass", "");
+                    Toast.makeText(this, hecho, Toast.LENGTH_SHORT).show();
+                    new Thread(() -> {
+                        Red.Respuesta r = Red.panel("POST", ruta, clave);
+                        runOnUiThread(() -> {
+                            if (r.codigo == 200) {
+                                Toast.makeText(this, "Listo. En unos segundos vuelve a estar disponible.", Toast.LENGTH_LONG).show();
+                                h.postDelayed(this::revisarServidor, 20000);
+                            } else if (r.codigo == 401) {
+                                Toast.makeText(this, "Clave incorrecta: actualízala en Ajustes", Toast.LENGTH_LONG).show();
+                            } else {
+                                Toast.makeText(this, "No se pudo (código " + r.codigo + ")", Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }).start();
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
     }
 
     // ---------- Actualizaciones ----------
