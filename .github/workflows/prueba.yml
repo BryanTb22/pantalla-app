@@ -2,6 +2,7 @@ name: Prueba en emulador
 on:
   push:
     branches: [main]
+    paths-ignore: ['pc/**', '.github/workflows/pc.yml']
   workflow_dispatch:
 permissions:
   contents: write
