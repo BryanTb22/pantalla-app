@@ -64,7 +64,7 @@ public class Vigia extends JobService {
                 p.edit().putBoolean("servidor_ok", arriba).apply();
             }
             try {
-                revisarPanel(p);
+                revisarPanel(getSharedPreferences("cfg", MODE_PRIVATE));
             } catch (Exception ignored) { }
             jobFinished(params, false);
         }).start();
