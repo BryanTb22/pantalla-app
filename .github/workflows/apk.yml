@@ -17,16 +17,22 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Compilar APK
+      - name: Compilar APK firmado
+        env:
+          KS_PASS: ${{ secrets.KS_PASS }}
         run: |
-          mkdir -p android/app/src/main/res/mipmap
-          cp icon-192.png android/app/src/main/res/mipmap/ic_launcher.png
+          export VERSION_CODE=$(( ${{ github.run_number }} + 1 ))
+          echo "${{ secrets.KS_BASE64 }}" | base64 -d > android/firma.p12
           cd android
-          gradle assembleDebug --no-daemon
-          cp app/build/outputs/apk/debug/app-debug.apk ../Pantalla.apk
+          gradle assembleRelease --no-daemon
+          cp app/build/outputs/apk/release/app-release.apk ../LitleJacobCloud.apk
+          echo "$VERSION_CODE" > ../version.txt
+          rm -f firma.p12
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: apk
-          name: Pantalla APK
-          files: Pantalla.apk
+          name: LitleJacob Cloud
+          files: |
+            LitleJacobCloud.apk
+            version.txt
           make_latest: true

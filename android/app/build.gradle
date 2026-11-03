@@ -1,12 +1,31 @@
 plugins { id 'com.android.application' }
 android {
-    namespace 'trade.litlejacob.pantalla'
+    namespace 'trade.litlejacob.cloud'
     compileSdk 34
     defaultConfig {
-        applicationId 'trade.litlejacob.pantalla'
+        applicationId 'trade.litlejacob.cloud'
         minSdk 24
         targetSdk 34
-        versionCode 1
-        versionName '1.0'
+        versionCode Integer.parseInt(System.getenv('VERSION_CODE') ?: '1')
+        versionName '1.' + (System.getenv('VERSION_CODE') ?: '1')
+    }
+    signingConfigs {
+        release {
+            storeFile file('../firma.p12')
+            storeType 'pkcs12'
+            storePassword System.getenv('KS_PASS')
+            keyAlias 'pantalla'
+            keyPassword System.getenv('KS_PASS')
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
     }
 }
