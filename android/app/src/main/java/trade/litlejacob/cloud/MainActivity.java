@@ -314,8 +314,9 @@ public class MainActivity extends Activity {
     }
 
     private TextView indicador(LinearLayout fila) {
-        TextView t = texto("", 13, GRIS, true);
-        t.setPadding(0, 0, dp(16), 0);
+        TextView t = texto("", 12, GRIS, true);
+        t.setSingleLine(true);
+        t.setPadding(0, 0, dp(12), 0);
         fila.addView(t);
         return t;
     }
