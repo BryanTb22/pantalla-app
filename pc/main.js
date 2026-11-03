@@ -254,10 +254,14 @@ async function capturar() {
   const espera = ms => new Promise(r => setTimeout(r, ms));
   fs.mkdirSync(CAPTURA, { recursive: true });
   const log = t => fs.appendFileSync(path.join(CAPTURA, 'prueba-pc-log.txt'), new Date().toISOString() + ' ' + t + '\n');
+  let errores = 0;
   try {
     log('version ' + app.getVersion());
     abrirPanel();
-    win.webContents.on('console-message', (e, nivel, msg, linea, fuente) => log('consola: ' + msg + ' (' + fuente + ':' + linea + ')'));
+    win.webContents.on('console-message', (e, nivel, msg, linea, fuente) => {
+      if (nivel >= 3) errores++;
+      log('consola: ' + msg + ' (' + fuente + ':' + linea + ')');
+    });
     win.webContents.on('preload-error', (e, p, err) => log('preload-error: ' + err));
     await espera(25000);
     fs.writeFileSync(path.join(CAPTURA, 'prueba-pc-panel.png'), (await win.webContents.capturePage()).toPNG());
@@ -266,7 +270,8 @@ async function capturar() {
     await espera(15000);
     fs.writeFileSync(path.join(CAPTURA, 'prueba-pc-visor.png'), (await visores.ver.webContents.capturePage()).toPNG());
     log('visor: ' + visores.ver.webContents.getURL().replace(/password=[^&]*/, 'password=***'));
-    log('OK');
+    const estado = await win.webContents.executeJavaScript("document.getElementById('estado').textContent");
+    log(errores || estado.startsWith('Revisando') ? 'FALLO: el panel no arrancó bien' : 'OK');
   } catch (e) { log('ERROR ' + (e && e.stack || e)); }
   saliendo = true;
   app.exit(0);

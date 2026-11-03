@@ -1,6 +1,5 @@
 'use strict';
 const $ = id => document.getElementById(id);
-const lj = window.lj;
 
 function el(tag, clase, texto) {
   const e = document.createElement(tag);
