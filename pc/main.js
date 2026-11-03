@@ -257,9 +257,11 @@ async function capturar() {
   try {
     log('version ' + app.getVersion());
     abrirPanel();
-    await espera(15000);
+    win.webContents.on('console-message', (e, nivel, msg, linea, fuente) => log('consola: ' + msg + ' (' + fuente + ':' + linea + ')'));
+    win.webContents.on('preload-error', (e, p, err) => log('preload-error: ' + err));
+    await espera(25000);
     fs.writeFileSync(path.join(CAPTURA, 'prueba-pc-panel.png'), (await win.webContents.capturePage()).toPNG());
-    log('panel: ' + await win.webContents.executeJavaScript("document.getElementById('estado').textContent"));
+    log('panel: ' + await win.webContents.executeJavaScript("document.getElementById('estado').textContent + ' | ' + document.getElementById('detalle').textContent + ' | aviso=' + document.getElementById('swAviso').checked + ' | ' + document.getElementById('version').textContent + ' | lj=' + typeof window.lj"));
     abrirVisor(false);
     await espera(15000);
     fs.writeFileSync(path.join(CAPTURA, 'prueba-pc-visor.png'), (await visores.ver.webContents.capturePage()).toPNG());
