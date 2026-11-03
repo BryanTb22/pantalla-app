@@ -1,0 +1,12 @@
+plugins { id 'com.android.application' }
+android {
+    namespace 'trade.litlejacob.pantalla'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'trade.litlejacob.pantalla'
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+}
