@@ -19,11 +19,17 @@ public class Vigia extends JobService {
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setPersisted(true)
                 .build();
-        js.schedule(ji);
+        try {
+            js.schedule(ji);
+        } catch (Exception e) {
+            // Si el sistema no permite programar la revisión, la app sigue funcionando igual.
+        }
     }
 
     static void cancelar(Context c) {
-        c.getSystemService(JobScheduler.class).cancel(ID);
+        try {
+            c.getSystemService(JobScheduler.class).cancel(ID);
+        } catch (Exception ignored) { }
     }
 
     /** true = en línea, false = caído, null = no se pudo saber (sin internet en el celular). */
