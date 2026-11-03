@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'">
+<title>LitleJacob Cloud</title>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <img src="icono.png" alt="" class="logo">
+    <div>
+      <h1>LitleJacob Cloud</h1>
+      <p class="sub">Tu Chrome en la nube</p>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section class="col">
+      <div class="card estado" id="estadoCard" title="Clic para volver a revisar">
+        <div class="fila"><span class="punto ambar" id="punto"></span><span id="estado">Revisando servidor…</span></div>
+        <p class="detalle" id="detalle">Clic aquí para volver a revisar</p>
+        <div class="inds">
+          <span class="ind" id="indPantalla">● Pantalla</span>
+          <span class="ind" id="indConector">● Conector</span>
+          <span class="ind" id="indChrome">● Chrome</span>
+        </div>
+        <p class="recursos" id="recursos" hidden></p>
+      </div>
+
+      <div class="banner" id="banner" hidden>
+        <div id="txtUpd">Hay una actualización</div>
+        <button class="link" id="btnUpd">Reiniciar y actualizar →</button>
+      </div>
+
+      <button class="accion principal" id="btnVer"><b>👁&nbsp; Ver pantalla</b><span>Mira lo que hace Claude, sin tocar nada</span></button>
+      <button class="accion" id="btnControlar"><b>🖐&nbsp; Controlar pantalla</b><span>Usa mouse y teclado, por ejemplo para iniciar sesión</span></button>
+      <button class="accion" id="btnClaude"><b>✳&nbsp; Abrir Claude</b><span>Ir a claude.ai para darle órdenes</span></button>
+
+      <h2>Herramientas</h2>
+      <div class="card lista">
+        <button class="opcion" id="btnReiniciar"><b>🔄&nbsp; Reiniciar Chrome</b><span>Lo cierra y lo vuelve a abrir con las mismas pestañas</span></button>
+        <hr>
+        <button class="opcion" id="btnLimpiar"><b>🧹&nbsp; Limpiar caché</b><span>Libera espacio y memoria (Chrome se reinicia ~20 s)</span></button>
+      </div>
+    </section>
+
+    <section class="col">
+      <h2 id="tituloPestanas">Pestañas abiertas</h2>
+      <div class="card lista" id="pestanas"><p class="nota">Cargando…</p></div>
+
+      <h2>Sesiones en el Chrome nube</h2>
+      <div class="card lista" id="sesiones"><p class="nota">Cargando…</p></div>
+
+      <h2>Últimos eventos del servidor</h2>
+      <div class="card lista" id="eventos"><p class="nota">Cargando…</p></div>
+
+      <h2>Ajustes</h2>
+      <div class="card lista">
+        <label class="switch"><span>Avisarme si el servidor se cae<small>Sigue vigilando junto al reloj aunque cierres la ventana</small></span><input type="checkbox" id="swAviso"><i></i></label>
+        <hr>
+        <label class="switch"><span>Abrir al prender la PC<small>Arranca escondido junto al reloj</small></span><input type="checkbox" id="swInicio"><i></i></label>
+        <hr>
+        <button class="opcion" id="btnClave"><b>Cambiar contraseña de la pantalla</b></button>
+        <hr>
+        <button class="opcion" id="btnBuscar"><b>Buscar actualización</b></button>
+      </div>
+      <p class="version" id="version"></p>
+    </section>
+  </div>
+</div>
+
+<div class="velo" id="velo" hidden>
+  <div class="dialogo">
+    <h3 id="dTitulo"></h3>
+    <p id="dMensaje"></p>
+    <input id="dInput" type="password" placeholder="Contraseña" autocomplete="off" hidden>
+    <div class="botones">
+      <button class="sec" id="dNo">Cancelar</button>
+      <button class="pri" id="dSi">Sí</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+<script src="panel.js"></script>
+</body>
+</html>

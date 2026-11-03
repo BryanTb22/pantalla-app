@@ -1,0 +1,53 @@
+name: Programa de PC
+on:
+  push:
+    branches: [main]
+    paths: ['pc/**', '.github/workflows/pc.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: pc
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar dependencias
+        run: npm install --no-audit --no-fund
+      - name: Poner número de versión
+        shell: bash
+        run: npm version "1.0.${{ github.run_number }}" --no-git-tag-version --allow-same-version
+      - name: Compilar instalador de Windows
+        run: npx electron-builder --win nsis --publish never
+      - name: Prueba (abre el programa y saca capturas)
+        shell: pwsh
+        run: |
+          $env:LJ_CAPTURA = "$PWD\captura"
+          $p = Start-Process -FilePath "dist\win-unpacked\LitleJacob Cloud.exe" -PassThru
+          if (-not $p.WaitForExit(90000)) { Stop-Process -Id $p.Id -Force; "TIEMPO AGOTADO" | Out-File -Append captura\prueba-pc-log.txt }
+          Get-Content captura\prueba-pc-log.txt
+          if (-not (Select-String -Path captura\prueba-pc-log.txt -Pattern " OK$" -Quiet)) { exit 1 }
+      - name: Publicar resultados de la prueba
+        if: always()
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: pc-prueba
+          name: Prueba del programa de PC
+          make_latest: false
+          files: |
+            pc/captura/*
+      - name: Publicar instalador
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: pc
+          name: LitleJacob Cloud para PC
+          make_latest: false
+          files: |
+            pc/dist/LitleJacobCloud-Setup.exe
+            pc/dist/LitleJacobCloud-Setup.exe.blockmap
+            pc/dist/latest.yml
