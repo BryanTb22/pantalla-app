@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Pantalla</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<style>
+html,body{margin:0;height:100%;background:#000;overflow:hidden}
+iframe{position:fixed;inset:0;width:100%;height:100%;border:0}
+#rot{display:none;position:fixed;inset:0;background:#000;color:#ccc;font:16px sans-serif;align-items:center;justify-content:center;text-align:center;z-index:2}
+@media (orientation:portrait){#rot{display:flex}}
+</style>
+</head>
+<body>
+<iframe src="https://pantalla.litlejacob.trade/vnc.html?autoconnect=true&resize=scale&view_only=true&reconnect=true&reconnect_delay=3000&show_dot=true" allow="fullscreen" allowfullscreen></iframe>
+<div id="rot">Gira el celular en horizontal 🔄</div>
+<script>
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
+try{screen.orientation.lock('landscape')}catch(e){}
+</script>
+</body>
+</html>
